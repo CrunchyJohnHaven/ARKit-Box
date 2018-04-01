@@ -11,7 +11,7 @@ import SceneKit
 import ARKit
 
 class ViewController: UIViewController, ARSCNViewDelegate {
-
+    let scene = SCNScene()
     @IBOutlet var sceneView: ARSCNView!
     
     override func viewDidLoad() {
@@ -34,7 +34,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-       addBox()
+   
+        addBox()
         // Create a session configuration
         let configuration = ARWorldTrackingConfiguration()
 
@@ -66,25 +67,32 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         return node
     }
 */
-    func addBox() {
+    func addBox(x: Float = 0, y: Float = 0, z: Float = -0.2) {
         print("box")
         let box = SCNBox(width: 0.05, height: 0.05, length: 0.05, chamferRadius: 0)
         let boxNode = SCNNode()
         boxNode.geometry = box
-        boxNode.position = SCNVector3(0,0,-0.2)
-        let scene = SCNScene()
-        scene.rootNode.addChildNode(boxNode)
-        sceneView.scene = scene
+        boxNode.position = SCNVector3(x,y,z)
+        self.scene.rootNode.addChildNode(boxNode)
+        sceneView.self.scene = scene
     }
     func addTapGestureToSceneView() {
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(ViewController.didTap(withGestureRecognizer:)))
         sceneView.addGestureRecognizer(tapGestureRecognizer)
     }
-    
     @objc func didTap(withGestureRecognizer recognizer: UIGestureRecognizer) {
+        print("DidTap")
         let tapLocation = recognizer.location(in: sceneView)
         let hitTestResults = sceneView.hitTest(tapLocation)
-        guard let node = hitTestResults.first?.node else { return }
+        guard let node = hitTestResults.first?.node else {
+            let hitTestResultsWithFeaturePoints = sceneView.hitTest(tapLocation, types: .featurePoint)
+            
+            if let hitTestResultWithFeaturePoints = hitTestResultsWithFeaturePoints.first {
+                let translation = hitTestResultWithFeaturePoints.worldTransform.translation
+                addBox(x: translation.x, y: translation.y, z: translation.z)
+            }
+            return
+        }
         node.removeFromParentNode()
     }
 
