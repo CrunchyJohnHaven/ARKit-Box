@@ -16,7 +16,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        addBox()
+        addTapGestureToSceneView()
+    
         // Set the view's delegate
         sceneView.delegate = self
         
@@ -24,7 +26,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.showsStatistics = true
         
         // Create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
+        let scene = SCNScene()
         
         // Set the scene to the view
         sceneView.scene = scene
@@ -32,7 +34,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+       addBox()
         // Create a session configuration
         let configuration = ARWorldTrackingConfiguration()
 
@@ -47,8 +49,10 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.session.pause()
     }
     
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
+        
         // Release any cached data, images, etc that aren't in use.
     }
 
@@ -62,7 +66,28 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         return node
     }
 */
+    func addBox() {
+        print("box")
+        let box = SCNBox(width: 0.05, height: 0.05, length: 0.05, chamferRadius: 0)
+        let boxNode = SCNNode()
+        boxNode.geometry = box
+        boxNode.position = SCNVector3(0,0,-0.2)
+        let scene = SCNScene()
+        scene.rootNode.addChildNode(boxNode)
+        sceneView.scene = scene
+    }
+    func addTapGestureToSceneView() {
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(ViewController.didTap(withGestureRecognizer:)))
+        sceneView.addGestureRecognizer(tapGestureRecognizer)
+    }
     
+    @objc func didTap(withGestureRecognizer recognizer: UIGestureRecognizer) {
+        let tapLocation = recognizer.location(in: sceneView)
+        let hitTestResults = sceneView.hitTest(tapLocation)
+        guard let node = hitTestResults.first?.node else { return }
+        node.removeFromParentNode()
+    }
+
     func session(_ session: ARSession, didFailWithError error: Error) {
         // Present an error message to the user
         
@@ -76,5 +101,11 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     func sessionInterruptionEnded(_ session: ARSession) {
         // Reset tracking and/or remove existing anchors if consistent tracking is required
         
+    }
+}
+extension float4x4 {
+    var translation: float3 {
+        let translation = self.columns.3
+        return float3(translation.x, translation.y, translation.z)
     }
 }
